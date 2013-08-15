@@ -36,6 +36,7 @@ testfiles = test-basic \
 	test-admin-deploy-2 \
 	test-admin-deploy-uboot \
 	test-setuid \
+	test-delta \
 	test-xattrs \
 	$(NULL)
 insttest_SCRIPTS = $(addprefix tests/,$(testfiles:=.sh))
