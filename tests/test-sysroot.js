@@ -89,8 +89,12 @@ assertEquals(deployments[0].get_csum(), deployment.get_csum());
 let deploymentPath = sysroot.get_deployment_directory(deployment);
 assertEquals(deploymentPath.query_exists(null), true);
 
+print("OK one deployment");
+
 /// TEST: We can delete the deployment, going back to empty
 sysroot.write_deployments([], null);
+
+print("OK empty deployments");
 
 assertEquals(deploymentPath.query_exists(null), false);
 
@@ -109,17 +113,18 @@ libtestExec('os_repository_new_commit');
 
 sysrootRepo.pull('testos', null, 0, null);
 
-let newRuntimeRef = 'testos/buildmaster/x86_64-runtime';
-let [,newRev] = upstreamRepo.resolve_rev(newRuntimeRef, false);
+let [,newRev] = upstreamRepo.resolve_rev(runtimeRef, false);
 
 print("testos => " + newRev);
 assertNotEquals(rev, newRev);
 
 mergeDeployment = sysroot.get_merge_deployment('testos');
-let [,newDeployment] = sysroot.deploy_one_tree('testos', rev, origin,
+let [,newDeployment] = sysroot.deploy_one_tree('testos', newRev, origin,
 					       null, mergeDeployment,
 					       null);
 newDeployments = [mergeDeployment, newDeployment];
+assertNotEquals(mergeDeployment.get_bootcsum(), newDeployment.get_bootcsum());
+assertNotEquals(mergeDeployment.get_csum(), newDeployment.get_csum());
 sysroot.write_deployments(newDeployments, null);
 deployments = sysroot.get_deployments();
 assertEquals(deployments.length, 2);
@@ -127,3 +132,21 @@ assertEquals(deploymentPath.query_exists(null), true);
 let newDeploymentPath = sysroot.get_deployment_directory(newDeployment);
 assertEquals(newDeploymentPath.query_exists(null), true);
 
+print("OK two deployments");
+
+libtestExec('os_repository_new_commit 0 1');
+
+sysrootRepo.pull('testos', null, 0, null);
+
+let [,thirdRev] = upstreamRepo.resolve_rev(runtimeRef, false);
+
+mergeDeployment = sysroot.get_merge_deployment('testos');
+let [,thirdDeployment] = sysroot.deploy_one_tree('testos', thirdRev, origin,
+						 null, mergeDeployment,
+						 null);
+assertEquals(mergeDeployment.get_bootcsum(), thirdDeployment.get_bootcsum());
+assertNotEquals(mergeDeployment.get_csum(), newDeployment.get_csum());
+newDeployments = [deployment, newDeployment, thirdDeployment];
+sysroot.write_deployments(newDeployments, null);
+deployments = sysroot.get_deployments();
+assertEquals(deployments.length, 3);
